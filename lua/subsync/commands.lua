@@ -39,6 +39,7 @@ function M.read(enc)
 
   lines_set(lines)
   buf_enc[bufnr] = enc
+  vim.bo.fileencoding = enc
   vim.bo.modified = false
   info('Read with encoding: ' .. enc)
 end
@@ -59,6 +60,7 @@ function M.write(enc)
   local ok, errmsg = encoding.write_file(path, content, use_enc)
   if not ok then err(errmsg); return end
 
+  vim.bo.fileencoding = use_enc
   vim.bo.modified = false
   info('Written (' .. use_enc .. '): ' .. path)
 end
