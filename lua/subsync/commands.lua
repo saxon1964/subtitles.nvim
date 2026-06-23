@@ -1,6 +1,5 @@
-local parser   = require('subsync.parser')
-local time     = require('subsync.time')
-local encoding = require('subsync.encoding')
+local parser = require('subsync.parser')
+local time   = require('subsync.time')
 
 local M = {}
 
@@ -28,19 +27,11 @@ function M.read(enc)
   local path  = vim.api.nvim_buf_get_name(bufnr)
   if path == '' then err('Buffer has no associated file'); return end
 
-  local content, errmsg = encoding.read_file(path, enc)
-  if not content then err(errmsg); return end
-
-  local lines = {}
-  for line in (content .. '\n'):gmatch('([^\n]*)\n') do
-    lines[#lines + 1] = line:gsub('\r$', '')
-  end
-  if lines[#lines] == '' then lines[#lines] = nil end
-
-  lines_set(lines)
+  -- Let Neovim reload the file natively with the given encoding so that
+  -- fileencoding, mtime tracking, and undo history are all handled correctly.
   buf_enc[bufnr] = enc
-  vim.bo.fileencoding = enc
-  vim.bo.modified = false
+  local ok, e = pcall(vim.cmd, 'edit! ++enc=' .. enc)
+  if not ok then err('Read failed: ' .. tostring(e)); return end
   info('Read with encoding: ' .. enc)
 end
 
@@ -56,12 +47,12 @@ function M.write(enc)
   local new_lines = parser.entries_to_lines(entries)
   lines_set(new_lines)
 
-  local content = table.concat(new_lines, '\n') .. '\n'
-  local ok, errmsg = encoding.write_file(path, content, use_enc)
-  if not ok then err(errmsg); return end
-
+  -- Set encoding before writing so Neovim converts the UTF-8 buffer content
+  -- to the target encoding on disk and updates its own mtime tracking.
+  -- This prevents autoread from treating the file as externally modified.
   vim.bo.fileencoding = use_enc
-  vim.bo.modified = false
+  local ok, e = pcall(vim.cmd, 'write')
+  if not ok then err('Write failed: ' .. tostring(e)); return end
   info('Written (' .. use_enc .. '): ' .. path)
 end
 
