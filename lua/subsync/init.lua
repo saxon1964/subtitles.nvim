@@ -20,6 +20,8 @@ function M.setup()
       cmds.shift(args[2] or '')
     elseif sub == 'interpolate' then
       cmds.interpolate(args[2] and args[2]:lower() == 'strict')
+    elseif sub == 'length' then
+      cmds.length(args[2], args[3])
     elseif sub == 'clean' then
       cmds.clean()
     else
@@ -36,7 +38,7 @@ function M.setup()
       local trailing_space = cmdline:match('%s$')
 
       if n == 1 or (n == 2 and not trailing_space) then
-        local subs = {'clean', 'interpolate', 'read', 'shift', 'write'}
+        local subs = {'clean', 'interpolate', 'length', 'read', 'shift', 'write'}
         local out  = {}
         for _, s in ipairs(subs) do
           if s:sub(1, #arglead) == arglead then out[#out + 1] = s end

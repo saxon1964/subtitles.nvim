@@ -223,6 +223,45 @@ function M.interpolate(strict)
   lines_set(parser.entries_to_lines(entries))
 end
 
+-- `:SubSync length <min_timespec> <max_timespec>`
+-- Clamps every subtitle's duration into [min_ms, max_ms] by adjusting end times only.
+function M.length(min_str, max_str)
+  if not min_str or min_str == '' or not max_str or max_str == '' then
+    err('Usage: SubSync length <min_timespec> <max_timespec>'); return
+  end
+  local min_ms = time.parse(min_str)
+  local max_ms = time.parse(max_str)
+  if not min_ms then err('Invalid timespec: ' .. min_str); return end
+  if not max_ms then err('Invalid timespec: ' .. max_str); return end
+  if min_ms > max_ms then err('min_length must not exceed max_length'); return end
+
+  local entries = parser.parse_buffer(lines_get())
+  if #entries == 0 then info('No subtitle entries found'); return end
+
+  local changed = 0
+  for i, e in ipairs(entries) do
+    local dur = e.end_ms - e.start_ms
+    if dur < min_ms then
+      local new_end = e.start_ms + min_ms
+      local next = entries[i + 1]
+      if next and new_end > next.start_ms then
+        new_end = next.start_ms
+      end
+      if new_end > e.end_ms then
+        e.end_ms = new_end
+        changed = changed + 1
+      end
+    elseif dur > max_ms then
+      e.end_ms = e.start_ms + max_ms
+      changed = changed + 1
+    end
+  end
+
+  if changed == 0 then info('All subtitles already within length bounds'); return end
+  lines_set(parser.entries_to_lines(entries))
+  info(string.format('Adjusted %d subtitle(s)', changed))
+end
+
 -- `:SubSync clean`
 -- Strips all annotations without changing times or renumbering.
 function M.clean()
