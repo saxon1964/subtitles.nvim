@@ -152,6 +152,16 @@ Enforces a visibility duration window on every subtitle by adjusting end times o
 
 After execution: buffer contains a valid, renumbered `.srt` file.
 
+### `SubSync gap <timespec>`
+
+Ensures a minimum gap between every consecutive pair of subtitles by trimming end times only (start times are never changed).
+
+- If the gap between entry N's end and entry N+1's start is less than `timespec`, entry N's end time is trimmed to `next.start − timespec`.
+- If trimming would reduce the subtitle's duration to zero or below, that entry is left unchanged and reported.
+- `0` is valid — fixes overlaps without adding any extra space.
+
+After execution: buffer contains a valid, renumbered `.srt` file.
+
 ### `SubSync clean`
 
 Removes all annotations from the buffer without changing any timings or renumbering. Useful for discarding annotations without applying them.

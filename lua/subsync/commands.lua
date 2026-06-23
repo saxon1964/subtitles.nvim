@@ -255,6 +255,50 @@ function M.length(min_str, max_str)
   info(string.format('Adjusted %d subtitle(s)', changed))
 end
 
+-- `:SubSync gap <min_gap_timespec>`
+-- Ensures every consecutive pair of subtitles has at least `gap_ms` between them
+-- by trimming end times only. Entries where trimming would zero the duration are
+-- left unchanged and reported.
+function M.gap(gap_str)
+  if not gap_str or gap_str == '' then
+    err('Usage: SubSync gap <timespec>'); return
+  end
+  local gap_ms = time.parse(gap_str)
+  if not gap_ms then err('Invalid timespec: ' .. gap_str); return end
+
+  local entries = parser.parse_buffer(lines_get())
+  if #entries == 0 then info('No subtitle entries found'); return end
+
+  local changed = 0
+  local skipped = 0
+  for i = 1, #entries - 1 do
+    local e    = entries[i]
+    local next = entries[i + 1]
+    local actual_gap = next.start_ms - e.end_ms
+    if actual_gap < gap_ms then
+      local new_end = next.start_ms - gap_ms
+      if new_end <= e.start_ms then
+        skipped = skipped + 1
+      else
+        e.end_ms = new_end
+        changed  = changed + 1
+      end
+    end
+  end
+
+  if changed == 0 and skipped == 0 then
+    info('All gaps already sufficient'); return
+  end
+  if changed > 0 then
+    lines_set(parser.entries_to_lines(entries))
+  end
+  local msg = string.format('Adjusted %d subtitle(s)', changed)
+  if skipped > 0 then
+    msg = msg .. string.format('; %d skipped (duration too short to fix)', skipped)
+  end
+  info(msg)
+end
+
 -- `:SubSync clean`
 -- Strips all annotations without changing times or renumbering.
 function M.clean()

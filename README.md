@@ -92,6 +92,22 @@ Enforces a visibility duration window on every subtitle by adjusting end times o
 :SubSync length 1,500 4    " min 1.5 s, max 4 s
 ```
 
+### `SubSync gap <timespec>`
+
+Ensures a minimum gap between every consecutive pair of subtitles by trimming end
+times only — start times are never changed.
+
+- If the gap between entry N's end and entry N+1's start is smaller than `timespec`,
+  entry N's end time is trimmed to `next.start − timespec`.
+- If trimming would reduce the subtitle's duration to zero or below, that entry is
+  left unchanged and reported.
+- Use `0` to fix overlaps without adding any extra space.
+
+```vim
+:SubSync gap 0,080     " enforce 80 ms minimum gap
+:SubSync gap 0         " fix overlaps only
+```
+
 ### `SubSync clean`
 
 Removes all annotations without changing any timings or renumbering.
