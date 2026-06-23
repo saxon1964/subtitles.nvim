@@ -10,17 +10,17 @@ apply them all at once with a single command.
 
 **[lazy.nvim](https://github.com/folke/lazy.nvim)**
 ```lua
-{ 'saxon1964/subtitles.nvim' }
+{ 'saxon1964/subtitles.nvim', version = '*' }
 ```
 
 **[packer.nvim](https://github.com/wbthomason/packer.nvim)**
 ```lua
-use 'saxon1964/subtitles.nvim'
+use { 'saxon1964/subtitles.nvim', branch = 'master' }
 ```
 
 **[vim-plug](https://github.com/junegunn/vim-plug)**
 ```vim
-Plug 'saxon1964/subtitles.nvim'
+Plug 'saxon1964/subtitles.nvim', { 'branch': 'master', 'tag': 'v*' }
 ```
 
 No configuration is required. The `:SubSync` command is available as soon as the
