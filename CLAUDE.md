@@ -142,6 +142,16 @@ After execution: buffer contains a valid, annotation-free `.srt` file with renum
 
 Same as `SubSync interpolate`, but subtitles outside the outermost anchor points retain their original timings unchanged.
 
+### `SubSync length <min_timespec> <max_timespec>`
+
+Enforces a visibility duration window on every subtitle by adjusting end times only (start times are never changed).
+
+- **Too short** (`duration < min`): end time is extended to `start + min`. If the next subtitle starts before that point, end time is clamped to the next subtitle's start (no overlap is created).
+- **Too long** (`duration > max`): end time is trimmed to `start + max`.
+- Subtitles already within `[min, max]` are untouched.
+
+After execution: buffer contains a valid, renumbered `.srt` file.
+
 ### `SubSync clean`
 
 Removes all annotations from the buffer without changing any timings or renumbering. Useful for discarding annotations without applying them.

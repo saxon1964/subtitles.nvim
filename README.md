@@ -76,6 +76,22 @@ anchors are extrapolated using the slope of the nearest segment.
 Same as `SubSync interpolate`, but subtitles outside the outermost anchor points are
 left unchanged.
 
+### `SubSync length <min_timespec> <max_timespec>`
+
+Enforces a visibility duration window on every subtitle by adjusting end times only
+— start times are never changed.
+
+- If a subtitle is **shorter** than `min_timespec`, its end time is extended. If
+  the next subtitle starts too soon to allow the full minimum, the end time is
+  clamped to the next subtitle's start (no overlap).
+- If a subtitle is **longer** than `max_timespec`, its end time is trimmed.
+- Subtitles already within the window are left unchanged.
+
+```vim
+:SubSync length 2 5        " min 2 s, max 5 s
+:SubSync length 1,500 4    " min 1.5 s, max 4 s
+```
+
 ### `SubSync clean`
 
 Removes all annotations without changing any timings or renumbering.
