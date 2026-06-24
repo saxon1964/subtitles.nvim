@@ -142,6 +142,21 @@ Re-reads the current buffer from disk, discarding all unsaved changes. Uses the
 encoding remembered from the last `SubSync read`, or UTF-8 if none was set.
 Equivalent to `:e!` but encoding-aware.
 
+### `SubSync fixspeed [chars_per_sec]`
+
+Extends end times of subtitles that exceed the reading speed threshold. Uses
+`max_reading_speed` from config if no argument is given.
+
+- End time is set to `start + char_count / chars_per_sec`.
+- If that would overlap the next subtitle, end time is clamped to the next
+  subtitle's start (zero gap — readability takes priority over spacing).
+- Start times are never changed. HTML tags are excluded from the character count.
+
+```vim
+:SubSync fixspeed        " uses max_reading_speed from config
+:SubSync fixspeed 20     " override to 20 chars/sec
+```
+
 ### `SubSync info`
 
 Opens a read-only scratch split summarising the current file. Shows the active

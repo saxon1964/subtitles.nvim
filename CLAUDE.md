@@ -203,6 +203,19 @@ Displays a summary of the current subtitle file in a scratch split. Reports the 
 
 The buffer is read-only. Press `q` to close.
 
+### `SubSync fixspeed [chars_per_sec]`
+
+Extends end times of subtitles that exceed the reading speed threshold, making them readable at the given speed. If no argument is given, uses `max_reading_speed` from config.
+
+- End time is extended to `start + char_count / chars_per_sec`.
+- If that would overlap the next subtitle, end time is clamped to the next subtitle's start (zero gap is acceptable — readability takes priority).
+- Start times are never changed.
+- Subtitles already within the speed limit are untouched.
+
+HTML-style tags (e.g. `<i>`) are excluded from the character count.
+
+After execution: buffer contains a valid, renumbered `.srt` file.
+
 ### `SubSync clean`
 
 Removes all annotations from the buffer without changing any timings or renumbering. Useful for discarding annotations without applying them.

@@ -432,4 +432,48 @@ function M.info()
   vim.keymap.set('n', 'q', '<cmd>close<cr>', { buffer = bufnr, silent = true })
 end
 
+-- `:SubSync fixspeed [chars_per_sec]`
+-- Extends end times of subtitles that exceed the reading speed threshold so
+-- they become readable. End time is capped at next subtitle's start (no overlap).
+function M.fixspeed(speed_str)
+  local speed
+  if speed_str and speed_str ~= '' then
+    speed = tonumber(speed_str)
+    if not speed or speed <= 0 then err('Invalid reading speed: ' .. speed_str); return end
+  else
+    speed = cfg.max_reading_speed
+  end
+
+  local entries = parser.parse_buffer(lines_get())
+  if #entries == 0 then info('No subtitle entries found'); return end
+
+  local changed = 0
+  local clamped = 0
+  for i, e in ipairs(entries) do
+    local text  = table.concat(e.text, ' ')
+    local chars = #text:gsub('%s+', ' '):gsub('<[^>]+>', '')
+    local required_ms = math.ceil(chars / speed * 1000)
+    if e.end_ms - e.start_ms < required_ms then
+      local new_end = e.start_ms + required_ms
+      local next = entries[i + 1]
+      if next and new_end > next.start_ms then
+        new_end = next.start_ms
+        clamped = clamped + 1
+      end
+      if new_end > e.end_ms then
+        e.end_ms = new_end
+        changed  = changed + 1
+      end
+    end
+  end
+
+  if changed == 0 then info('All subtitles within reading speed limit'); return end
+  lines_set(parser.entries_to_lines(entries))
+  local msg = string.format('Adjusted %d subtitle(s)', changed)
+  if clamped > 0 then
+    msg = msg .. string.format('; %d clamped to next subtitle start', clamped)
+  end
+  info(msg)
+end
+
 return M
