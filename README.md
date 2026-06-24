@@ -180,6 +180,11 @@ Press `q` to close the info window. Press `Enter` on any line containing a
 subtitle number (e.g. `#42`) to jump directly to that subtitle in the main
 buffer.
 
+### `SubSync sort`
+
+Reorders subtitle entries by start time (ascending) and renumbers them. Useful
+after manually inserting entries out of order. No-op if already sorted.
+
 ### `SubSync clean`
 
 Removes all annotations without changing any timings or renumbering.

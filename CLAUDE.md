@@ -220,6 +220,12 @@ HTML-style tags (e.g. `<i>`) are excluded from the character count.
 
 After execution: buffer contains a valid, renumbered `.srt` file.
 
+### `SubSync sort`
+
+Reorders subtitle entries by start time (ascending) and renumbers them. Useful after manually inserting entries out of order. If subtitles are already sorted, the buffer is left unchanged and the user is notified.
+
+After execution: buffer contains a valid, renumbered `.srt` file.
+
 ### `SubSync clean`
 
 Removes all annotations from the buffer without changing any timings or renumbering. Useful for discarding annotations without applying them.
@@ -238,7 +244,7 @@ Removes all annotations from the buffer without changing any timings or renumber
 
 ### Quality / correctness tools
 
-**`SubSync sort`** — reorder subtitle entries by start time. Useful after manually inserting entries out of order.
+~~**`SubSync sort`**~~ — implemented.
 
 ### Editing ergonomics
 

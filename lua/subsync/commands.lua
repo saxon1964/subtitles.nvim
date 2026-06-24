@@ -331,6 +331,25 @@ function M.gap(gap_str)
   info(msg)
 end
 
+-- `:SubSync sort`
+-- Reorders subtitle entries by start time (ascending), then renumbers.
+function M.sort()
+  local entries = parser.parse_buffer(lines_get())
+  if #entries == 0 then info('No subtitle entries found'); return end
+
+  local already_sorted = true
+  for i = 2, #entries do
+    if entries[i].start_ms < entries[i - 1].start_ms then
+      already_sorted = false; break
+    end
+  end
+  if already_sorted then info('Subtitles already in order'); return end
+
+  table.sort(entries, function(a, b) return a.start_ms < b.start_ms end)
+  lines_set(parser.entries_to_lines(entries))
+  info('Subtitles sorted by start time')
+end
+
 -- `:SubSync clean`
 -- Strips all annotations without changing times or renumbering.
 function M.clean()
