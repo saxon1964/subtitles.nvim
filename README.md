@@ -108,6 +108,12 @@ times only — start times are never changed.
 :SubSync gap 0         " fix overlaps only
 ```
 
+### `SubSync reload`
+
+Re-reads the current buffer from disk, discarding all unsaved changes. Uses the
+encoding remembered from the last `SubSync read`, or UTF-8 if none was set.
+Equivalent to `:e!` but encoding-aware.
+
 ### `SubSync clean`
 
 Removes all annotations without changing any timings or renumbering.

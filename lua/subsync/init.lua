@@ -7,13 +7,15 @@ function M.setup()
     local args = opts.fargs
     local sub   = args[1]
     if not sub then
-      vim.notify('[SubSync] Usage: SubSync <read|write|shift|interpolate|clean>', vim.log.levels.ERROR)
+      vim.notify('[SubSync] Usage: SubSync <read|reload|write|shift|interpolate|clean>', vim.log.levels.ERROR)
       return
     end
     sub = sub:lower()
 
     if sub == 'read' then
       cmds.read(args[2])
+    elseif sub == 'reload' then
+      cmds.reload()
     elseif sub == 'write' then
       cmds.write(args[2] or '')
     elseif sub == 'shift' then
@@ -40,7 +42,7 @@ function M.setup()
       local trailing_space = cmdline:match('%s$')
 
       if n == 1 or (n == 2 and not trailing_space) then
-        local subs = {'clean', 'gap', 'interpolate', 'length', 'read', 'shift', 'write'}
+        local subs = {'clean', 'gap', 'interpolate', 'length', 'read', 'reload', 'shift', 'write'}
         local out  = {}
         for _, s in ipairs(subs) do
           if s:sub(1, #arglead) == arglead then out[#out + 1] = s end

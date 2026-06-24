@@ -162,6 +162,10 @@ Ensures a minimum gap between every consecutive pair of subtitles by trimming en
 
 After execution: buffer contains a valid, renumbered `.srt` file.
 
+### `SubSync reload`
+
+Re-reads the current buffer from disk, discarding all unsaved changes. Uses the encoding remembered from the last `SubSync read`, or UTF-8 if none was set. Equivalent to `:e!` but encoding-aware.
+
 ### `SubSync clean`
 
 Removes all annotations from the buffer without changing any timings or renumbering. Useful for discarding annotations without applying them.
@@ -173,3 +177,33 @@ Removes all annotations from the buffer without changing any timings or renumber
 - Subtitle sequence numbers do not need to be correct while editing. A placeholder like `#` is acceptable.
 - Renumbering happens automatically on every `shift`, `interpolate`, and `write` operation.
 - All commands modify only the buffer; an explicit `SubSync write` is required to persist changes to disk.
+
+---
+
+## Ideas for future implementation
+
+### Quality / correctness tools
+
+**`SubSync validate`** — report structural problems without modifying the buffer: overlapping subtitles, duplicate sequence numbers, negative durations, entries out of chronological order. A dry-run companion to `gap` and `length`.
+
+**`SubSync sort`** — reorder subtitle entries by start time. Useful after manually inserting entries out of order.
+
+### Editing ergonomics
+
+**`SubSync merge`** — join consecutive subtitles into one: concatenate text, use first entry's start time and last entry's end time. Useful when a subtitle was split too aggressively.
+
+**`SubSync split`** — split the current subtitle at the cursor line into two entries, dividing the duration evenly. Inverse of `merge`.
+
+**`SubSync dup <N>`** — duplicate subtitle N as a new entry immediately after it (same timing, same text). Useful as a starting point when inserting a similar subtitle nearby.
+
+### Format conversion
+
+**`SubSync convert <format>`** — export to another subtitle format (`.vtt`, `.ass`, plain `.txt`). Read-only conversion; no import needed since `.srt` is the working format.
+
+### Statistics / inspection
+
+**`SubSync info`** — print summary stats: total subtitle count, total duration, average/min/max subtitle duration, number of overlaps, number of gaps below a threshold. Helps spot problems before editing.
+
+### Workflow
+
+~~**`SubSync reload`**~~ — implemented.

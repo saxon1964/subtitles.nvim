@@ -35,6 +35,18 @@ function M.read(enc)
   info('Read with encoding: ' .. enc)
 end
 
+-- `:SubSync reload`
+function M.reload()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local path  = vim.api.nvim_buf_get_name(bufnr)
+  if path == '' then err('Buffer has no associated file'); return end
+
+  local enc = buf_enc[bufnr] or 'utf-8'
+  local ok, e = pcall(vim.cmd, 'edit! ++enc=' .. enc)
+  if not ok then err('Reload failed: ' .. tostring(e)); return end
+  info('Reloaded with encoding: ' .. enc)
+end
+
 -- `:SubSync write [encoding]`
 function M.write(enc)
   local bufnr = vim.api.nvim_get_current_buf()
