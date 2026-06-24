@@ -3,6 +3,20 @@ local time   = require('subsync.time')
 
 local M = {}
 
+local cfg = {
+  default_encoding  = 'utf-8',
+  default_gap       = 80,    -- ms
+  min_duration      = 1500,  -- ms
+  max_duration      = 6000,  -- ms
+  max_reading_speed = 17,    -- chars/sec
+}
+
+function M.setup(user_cfg)
+  if user_cfg then
+    for k, v in pairs(user_cfg) do cfg[k] = v end
+  end
+end
+
 -- Remembered encoding per buffer number.
 local buf_enc = {}
 
@@ -18,21 +32,19 @@ local function info(msg)  vim.notify('[SubSync] ' .. msg, vim.log.levels.INFO)  
 local function warn(msg)  vim.notify('[SubSync] ' .. msg, vim.log.levels.WARN)  end
 local function err(msg)   vim.notify('[SubSync] ' .. msg, vim.log.levels.ERROR) end
 
--- `:SubSync read <encoding>`
+-- `:SubSync read [encoding]`
 function M.read(enc)
-  if not enc or enc == '' then
-    err('Usage: SubSync read <encoding>'); return
-  end
+  local use_enc = (enc and enc ~= '') and enc or cfg.default_encoding
   local bufnr = vim.api.nvim_get_current_buf()
   local path  = vim.api.nvim_buf_get_name(bufnr)
   if path == '' then err('Buffer has no associated file'); return end
 
   -- Let Neovim reload the file natively with the given encoding so that
   -- fileencoding, mtime tracking, and undo history are all handled correctly.
-  buf_enc[bufnr] = enc
-  local ok, e = pcall(vim.cmd, 'edit! ++enc=' .. enc)
+  buf_enc[bufnr] = use_enc
+  local ok, e = pcall(vim.cmd, 'edit! ++enc=' .. use_enc)
   if not ok then err('Read failed: ' .. tostring(e)); return end
-  info('Read with encoding: ' .. enc)
+  info('Read with encoding: ' .. use_enc)
 end
 
 -- `:SubSync reload`
@@ -41,7 +53,7 @@ function M.reload()
   local path  = vim.api.nvim_buf_get_name(bufnr)
   if path == '' then err('Buffer has no associated file'); return end
 
-  local enc = buf_enc[bufnr] or 'utf-8'
+  local enc = buf_enc[bufnr] or cfg.default_encoding
   local ok, e = pcall(vim.cmd, 'edit! ++enc=' .. enc)
   if not ok then err('Reload failed: ' .. tostring(e)); return end
   info('Reloaded with encoding: ' .. enc)
@@ -53,7 +65,7 @@ function M.write(enc)
   local path  = vim.api.nvim_buf_get_name(bufnr)
   if path == '' then err('Buffer has no associated file'); return end
 
-  local use_enc = (enc and enc ~= '') and enc or buf_enc[bufnr] or 'utf-8'
+  local use_enc = (enc and enc ~= '') and enc or buf_enc[bufnr] or cfg.default_encoding
 
   local entries   = parser.parse_buffer(lines_get())
   local new_lines = parser.entries_to_lines(entries)
@@ -228,17 +240,23 @@ function M.interpolate(strict)
   lines_set(parser.entries_to_lines(entries))
 end
 
--- `:SubSync length <min_timespec> <max_timespec>`
+-- `:SubSync length [min_timespec] [max_timespec]`
 -- Clamps every subtitle's duration into [min_ms, max_ms] by adjusting end times only.
 function M.length(min_str, max_str)
-  if not min_str or min_str == '' or not max_str or max_str == '' then
-    err('Usage: SubSync length <min_timespec> <max_timespec>'); return
+  local min_ms, max_ms
+  if min_str and min_str ~= '' then
+    min_ms = time.parse(min_str)
+    if not min_ms then err('Invalid timespec: ' .. min_str); return end
+  else
+    min_ms = cfg.min_duration
   end
-  local min_ms = time.parse(min_str)
-  local max_ms = time.parse(max_str)
-  if not min_ms then err('Invalid timespec: ' .. min_str); return end
-  if not max_ms then err('Invalid timespec: ' .. max_str); return end
-  if min_ms > max_ms then err('min_length must not exceed max_length'); return end
+  if max_str and max_str ~= '' then
+    max_ms = time.parse(max_str)
+    if not max_ms then err('Invalid timespec: ' .. max_str); return end
+  else
+    max_ms = cfg.max_duration
+  end
+  if min_ms > max_ms then err('min_duration must not exceed max_duration'); return end
 
   local entries = parser.parse_buffer(lines_get())
   if #entries == 0 then info('No subtitle entries found'); return end
@@ -267,16 +285,18 @@ function M.length(min_str, max_str)
   info(string.format('Adjusted %d subtitle(s)', changed))
 end
 
--- `:SubSync gap <min_gap_timespec>`
+-- `:SubSync gap [min_gap_timespec]`
 -- Ensures every consecutive pair of subtitles has at least `gap_ms` between them
 -- by trimming end times only. Entries where trimming would zero the duration are
 -- left unchanged and reported.
 function M.gap(gap_str)
-  if not gap_str or gap_str == '' then
-    err('Usage: SubSync gap <timespec>'); return
+  local gap_ms
+  if gap_str and gap_str ~= '' then
+    gap_ms = time.parse(gap_str)
+    if not gap_ms then err('Invalid timespec: ' .. gap_str); return end
+  else
+    gap_ms = cfg.default_gap
   end
-  local gap_ms = time.parse(gap_str)
-  if not gap_ms then err('Invalid timespec: ' .. gap_str); return end
 
   local entries = parser.parse_buffer(lines_get())
   if #entries == 0 then info('No subtitle entries found'); return end

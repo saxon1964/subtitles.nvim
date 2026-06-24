@@ -1,7 +1,8 @@
 local M = {}
 
-function M.setup()
+function M.setup(user_cfg)
   local cmds = require('subsync.commands')
+  cmds.setup(user_cfg)
 
   vim.api.nvim_create_user_command('SubSync', function(opts)
     local args = opts.fargs

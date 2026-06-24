@@ -28,12 +28,38 @@ plugin loads.
 
 ---
 
+## Configuration
+
+All options have sensible defaults. Override any of them by passing a table to
+`setup`:
+
+```lua
+require('subsync').setup({
+  default_encoding  = 'utf-8',  -- fallback encoding for read/write/reload
+  default_gap       = 80,       -- ms, used by SubSync gap when no arg given
+  min_duration      = 1500,     -- ms, used by SubSync length when no arg given
+  max_duration      = 6000,     -- ms, used by SubSync length when no arg given
+  max_reading_speed = 17,       -- chars/sec, used by SubSync info
+})
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `default_encoding` | `'utf-8'` | Encoding used by `read`/`write`/`reload` when none is specified |
+| `default_gap` | `80` | Minimum gap in ms enforced by `SubSync gap` when called without an argument |
+| `min_duration` | `1500` | Minimum subtitle duration in ms used by `SubSync length` when called without arguments |
+| `max_duration` | `6000` | Maximum subtitle duration in ms used by `SubSync length` when called without arguments |
+| `max_reading_speed` | `17` | Characters per second threshold above which `SubSync info` flags a subtitle as hard to read |
+
+---
+
 ## Commands
 
-### `SubSync read <encoding>`
+### `SubSync read [encoding]`
 
-Re-reads the current buffer from disk using the specified encoding, converting to
-UTF-8 for editing. The encoding is remembered and reused by `SubSync write`.
+Re-reads the current buffer from disk using the specified encoding (default:
+`default_encoding`), converting to UTF-8 for editing. The encoding is remembered
+and reused by `SubSync write`.
 
 ```vim
 :SubSync read cp1250
@@ -76,10 +102,11 @@ anchors are extrapolated using the slope of the nearest segment.
 Same as `SubSync interpolate`, but subtitles outside the outermost anchor points are
 left unchanged.
 
-### `SubSync length <min_timespec> <max_timespec>`
+### `SubSync length [min_timespec] [max_timespec]`
 
 Enforces a visibility duration window on every subtitle by adjusting end times only
-— start times are never changed.
+— start times are never changed. Omitting either argument uses `min_duration` or
+`max_duration` from config.
 
 - If a subtitle is **shorter** than `min_timespec`, its end time is extended. If
   the next subtitle starts too soon to allow the full minimum, the end time is
@@ -92,10 +119,11 @@ Enforces a visibility duration window on every subtitle by adjusting end times o
 :SubSync length 1,500 4    " min 1.5 s, max 4 s
 ```
 
-### `SubSync gap <timespec>`
+### `SubSync gap [timespec]`
 
 Ensures a minimum gap between every consecutive pair of subtitles by trimming end
-times only — start times are never changed.
+times only — start times are never changed. Omitting the argument uses
+`default_gap` from config.
 
 - If the gap between entry N's end and entry N+1's start is smaller than `timespec`,
   entry N's end time is trimmed to `next.start − timespec`.

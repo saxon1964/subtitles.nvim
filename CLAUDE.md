@@ -106,6 +106,30 @@ Both start and end times of every subtitle are interpolated (duration changes ar
 
 ---
 
+## Configuration
+
+All options have sensible defaults. Users can override them by passing a table to `setup`:
+
+```lua
+require('subsync').setup({
+  default_encoding  = 'utf-8',
+  default_gap       = 80,
+  min_duration      = 1500,
+  max_duration      = 6000,
+  max_reading_speed = 17,
+})
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `default_encoding` | `'utf-8'` | Encoding used by `read`/`write`/`reload` when none is specified |
+| `default_gap` | `80` ms | Minimum gap enforced by `SubSync gap` when called without an argument |
+| `min_duration` | `1500` ms | Minimum subtitle duration used by `SubSync length` when called without arguments |
+| `max_duration` | `6000` ms | Maximum subtitle duration used by `SubSync length` when called without arguments |
+| `max_reading_speed` | `17` chars/sec | Threshold above which `SubSync info` flags a subtitle as hard to read |
+
+---
+
 ## Commands
 
 ### `SubSync read <encoding>`
