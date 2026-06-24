@@ -157,6 +157,15 @@ Extends end times of subtitles that exceed the reading speed threshold. Uses
 :SubSync fixspeed 20     " override to 20 chars/sec
 ```
 
+### `SubSync jump <N>`
+
+Moves the cursor to the sequence-number line of subtitle `N`. Useful for
+navigating directly to a subtitle flagged by `SubSync info`.
+
+```vim
+:SubSync jump 42
+```
+
 ### `SubSync info`
 
 Opens a read-only scratch split summarising the current file. Shows the active
@@ -167,7 +176,9 @@ limits and a count of subtitles violating each one:
 - Too fast to read (vs. `max_reading_speed`) — sequence numbers listed
 - Out of order — sequence numbers listed
 
-Press `q` to close the info window.
+Press `q` to close the info window. Press `Enter` on any line containing a
+subtitle number (e.g. `#42`) to jump directly to that subtitle in the main
+buffer.
 
 ### `SubSync clean`
 

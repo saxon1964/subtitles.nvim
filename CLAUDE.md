@@ -190,6 +190,10 @@ After execution: buffer contains a valid, renumbered `.srt` file.
 
 Re-reads the current buffer from disk, discarding all unsaved changes. Uses the encoding remembered from the last `SubSync read`, or UTF-8 if none was set. Equivalent to `:e!` but encoding-aware.
 
+### `SubSync jump <N>`
+
+Moves the cursor to the sequence-number line of subtitle `N` in the current buffer. Useful for navigating directly to a subtitle flagged by `SubSync info`.
+
 ### `SubSync info`
 
 Displays a summary of the current subtitle file in a scratch split. Reports the limits in use (from config) and counts of subtitles violating each one:
@@ -201,7 +205,7 @@ Displays a summary of the current subtitle file in a scratch split. Reports the 
 - Too fast (characters per second > `max_reading_speed`; sequence numbers listed)
 - Out of order (start time earlier than previous entry's start time; sequence numbers listed)
 
-The buffer is read-only. Press `q` to close.
+The buffer is read-only. Press `q` to close. Press `Enter` on any line containing a subtitle number (e.g. `#42`) to jump directly to that subtitle in the main buffer.
 
 ### `SubSync fixspeed [chars_per_sec]`
 
@@ -233,8 +237,6 @@ Removes all annotations from the buffer without changing any timings or renumber
 ## Ideas for future implementation
 
 ### Quality / correctness tools
-
-**`SubSync validate`** — report structural problems without modifying the buffer: overlapping subtitles, duplicate sequence numbers, negative durations, entries out of chronological order. A dry-run companion to `gap` and `length`.
 
 **`SubSync sort`** — reorder subtitle entries by start time. Useful after manually inserting entries out of order.
 

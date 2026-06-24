@@ -356,6 +356,25 @@ function M.clean()
   info('Annotations removed')
 end
 
+-- `:SubSync jump <seq>`
+-- Moves the cursor to the sequence-number line of subtitle <seq>.
+function M.jump(seq_str)
+  if not seq_str or seq_str == '' then
+    err('Usage: SubSync jump <number>'); return
+  end
+  local target = tonumber(seq_str)
+  if not target then err('Invalid subtitle number: ' .. seq_str); return end
+
+  local entries = parser.parse_buffer(lines_get())
+  for _, e in ipairs(entries) do
+    if tonumber(e.seq) == target then
+      vim.api.nvim_win_set_cursor(0, {e.first_line, 0})
+      return
+    end
+  end
+  err('Subtitle #' .. seq_str .. ' not found')
+end
+
 -- `:SubSync info`
 function M.info()
   local entries = parser.parse_buffer(lines_get())
@@ -421,6 +440,9 @@ function M.info()
     fmt_count(out_of_order, 'Out of order'),
   }
 
+  -- Remember the subtitle window before opening the split.
+  local sub_win = vim.api.nvim_get_current_win()
+
   -- Open a scratch split at the bottom.
   vim.cmd('botright 16split')
   local bufnr = vim.api.nvim_create_buf(false, true)
@@ -430,6 +452,22 @@ function M.info()
   vim.bo[bufnr].bufhidden  = 'wipe'
   vim.bo[bufnr].filetype   = 'subsync-info'
   vim.keymap.set('n', 'q', '<cmd>close<cr>', { buffer = bufnr, silent = true })
+
+  -- Enter on a line jumps to the subtitle whose #N is under/nearest the cursor.
+  vim.keymap.set('n', '<CR>', function()
+    local line = vim.api.nvim_get_current_line()
+    local seq = line:match('#(%d+)')
+    if not seq then
+      -- Try scanning leftward on the same line for the first number after '('
+      seq = line:match('%(#(%d+)')
+    end
+    if not seq then info('No subtitle number under cursor'); return end
+    if not vim.api.nvim_win_is_valid(sub_win) then
+      err('Subtitle window no longer open'); return
+    end
+    vim.api.nvim_set_current_win(sub_win)
+    M.jump(seq)
+  end, { buffer = bufnr, silent = true })
 end
 
 -- `:SubSync fixspeed [chars_per_sec]`
