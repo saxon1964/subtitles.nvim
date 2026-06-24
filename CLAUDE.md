@@ -190,6 +190,19 @@ After execution: buffer contains a valid, renumbered `.srt` file.
 
 Re-reads the current buffer from disk, discarding all unsaved changes. Uses the encoding remembered from the last `SubSync read`, or UTF-8 if none was set. Equivalent to `:e!` but encoding-aware.
 
+### `SubSync info`
+
+Displays a summary of the current subtitle file in a scratch split. Reports the limits in use (from config) and counts of subtitles violating each one:
+
+- Too short (duration < `min_duration`)
+- Too long (duration > `max_duration`)
+- Gap too small (gap to next subtitle < `default_gap`)
+- Overlapping (entry ends after next entry starts)
+- Too fast (characters per second > `max_reading_speed`; sequence numbers listed)
+- Out of order (start time earlier than previous entry's start time; sequence numbers listed)
+
+The buffer is read-only. Press `q` to close.
+
 ### `SubSync clean`
 
 Removes all annotations from the buffer without changing any timings or renumbering. Useful for discarding annotations without applying them.
@@ -226,7 +239,7 @@ Removes all annotations from the buffer without changing any timings or renumber
 
 ### Statistics / inspection
 
-**`SubSync info`** — print summary stats: total subtitle count, total duration, average/min/max subtitle duration, number of overlaps, number of gaps below a threshold. Helps spot problems before editing.
+~~**`SubSync info`**~~ — implemented.
 
 ### Workflow
 

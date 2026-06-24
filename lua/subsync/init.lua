@@ -8,7 +8,7 @@ function M.setup(user_cfg)
     local args = opts.fargs
     local sub   = args[1]
     if not sub then
-      vim.notify('[SubSync] Usage: SubSync <read|reload|write|shift|interpolate|clean>', vim.log.levels.ERROR)
+      vim.notify('[SubSync] Usage: SubSync <read|reload|write|shift|interpolate|length|gap|clean|info>', vim.log.levels.ERROR)
       return
     end
     sub = sub:lower()
@@ -29,6 +29,8 @@ function M.setup(user_cfg)
       cmds.gap(args[2])
     elseif sub == 'clean' then
       cmds.clean()
+    elseif sub == 'info' then
+      cmds.info()
     else
       vim.notify('[SubSync] Unknown command: ' .. sub, vim.log.levels.ERROR)
     end
@@ -43,7 +45,7 @@ function M.setup(user_cfg)
       local trailing_space = cmdline:match('%s$')
 
       if n == 1 or (n == 2 and not trailing_space) then
-        local subs = {'clean', 'gap', 'interpolate', 'length', 'read', 'reload', 'shift', 'write'}
+        local subs = {'clean', 'gap', 'info', 'interpolate', 'length', 'read', 'reload', 'shift', 'write'}
         local out  = {}
         for _, s in ipairs(subs) do
           if s:sub(1, #arglead) == arglead then out[#out + 1] = s end

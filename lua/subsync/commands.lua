@@ -356,4 +356,80 @@ function M.clean()
   info('Annotations removed')
 end
 
+-- `:SubSync info`
+function M.info()
+  local entries = parser.parse_buffer(lines_get())
+  if #entries == 0 then info('No subtitle entries found'); return end
+
+  local n = #entries
+
+  -- Collect violations.
+  local too_short, too_long, gap_small, overlapping, too_fast, out_of_order = {}, {}, {}, {}, {}, {}
+
+  for i, e in ipairs(entries) do
+    local dur = e.end_ms - e.start_ms
+    if dur < cfg.min_duration then too_short[#too_short + 1] = e.seq end
+    if dur > cfg.max_duration then too_long[#too_long  + 1] = e.seq end
+
+    local text = table.concat(e.text, ' ')
+    local chars = #text:gsub('%s+', ' '):gsub('<[^>]+>', '')
+    if dur > 0 and (chars / (dur / 1000)) > cfg.max_reading_speed then
+      too_fast[#too_fast + 1] = e.seq
+    end
+
+    if i > 1 then
+      local prev = entries[i - 1]
+      local gap = e.start_ms - prev.end_ms
+      if gap < 0 then
+        overlapping[#overlapping + 1] = prev.seq
+      elseif gap < cfg.default_gap then
+        gap_small[#gap_small + 1] = prev.seq
+      end
+      if e.start_ms < prev.start_ms then
+        out_of_order[#out_of_order + 1] = e.seq
+      end
+    end
+  end
+
+  local function fmt_list(t)
+    if #t == 0 then return 'none' end
+    local seqs = {}
+    for _, s in ipairs(t) do seqs[#seqs + 1] = '#' .. tostring(s) end
+    return table.concat(seqs, ', ')
+  end
+
+  local function fmt_count(t, label)
+    return string.format('  %-30s: %d%s', label, #t,
+      #t > 0 and ('  (' .. fmt_list(t) .. ')') or '')
+  end
+
+  local lines = {
+    'SubSync Info — ' .. n .. ' subtitle' .. (n ~= 1 and 's' or ''),
+    '',
+    'Limits in use:',
+    string.format('  Min duration       : %d ms',       cfg.min_duration),
+    string.format('  Max duration       : %d ms',       cfg.max_duration),
+    string.format('  Min gap            : %d ms',       cfg.default_gap),
+    string.format('  Max reading speed  : %d chars/sec', cfg.max_reading_speed),
+    '',
+    'Issues found:',
+    fmt_count(too_short,    'Too short (< ' .. cfg.min_duration .. ' ms)'),
+    fmt_count(too_long,     'Too long  (> ' .. cfg.max_duration .. ' ms)'),
+    fmt_count(gap_small,    'Gap too small (< ' .. cfg.default_gap .. ' ms)'),
+    fmt_count(overlapping,  'Overlapping'),
+    fmt_count(too_fast,     'Too fast (> ' .. cfg.max_reading_speed .. ' cps)'),
+    fmt_count(out_of_order, 'Out of order'),
+  }
+
+  -- Open a scratch split at the bottom.
+  vim.cmd('botright 16split')
+  local bufnr = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_win_set_buf(0, bufnr)
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+  vim.bo[bufnr].modifiable = false
+  vim.bo[bufnr].bufhidden  = 'wipe'
+  vim.bo[bufnr].filetype   = 'subsync-info'
+  vim.keymap.set('n', 'q', '<cmd>close<cr>', { buffer = bufnr, silent = true })
+end
+
 return M

@@ -142,6 +142,18 @@ Re-reads the current buffer from disk, discarding all unsaved changes. Uses the
 encoding remembered from the last `SubSync read`, or UTF-8 if none was set.
 Equivalent to `:e!` but encoding-aware.
 
+### `SubSync info`
+
+Opens a read-only scratch split summarising the current file. Shows the active
+limits and a count of subtitles violating each one:
+
+- Too short / too long (vs. `min_duration` / `max_duration`)
+- Gap too small / overlapping (vs. `default_gap`)
+- Too fast to read (vs. `max_reading_speed`) — sequence numbers listed
+- Out of order — sequence numbers listed
+
+Press `q` to close the info window.
+
 ### `SubSync clean`
 
 Removes all annotations without changing any timings or renumbering.
