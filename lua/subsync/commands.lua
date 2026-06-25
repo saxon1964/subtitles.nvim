@@ -647,4 +647,42 @@ function M.split()
   info(string.format('Split #%s at %s', e.seq, time.format(mid_ms)))
 end
 
+-- `:SubSync dup <N>`
+-- Inserts a copy of subtitle N immediately after it with identical timing and text.
+function M.dup(seq_str)
+  if not seq_str or seq_str == '' then
+    err('Usage: SubSync dup <number>'); return
+  end
+  local target = tonumber(seq_str)
+  if not target then err('Invalid subtitle number: ' .. seq_str); return end
+
+  local entries = parser.parse_buffer(lines_get())
+
+  local idx = nil
+  for i, e in ipairs(entries) do
+    if tonumber(e.seq) == target then idx = i; break end
+  end
+
+  if not idx then err('Subtitle #' .. seq_str .. ' not found'); return end
+
+  local src = entries[idx]
+  local copy_text = {}
+  for _, line in ipairs(src.text) do copy_text[#copy_text + 1] = line end
+
+  local copy = {
+    seq            = src.seq,
+    annotation_str = nil,
+    annotation     = nil,
+    start_ms       = src.start_ms,
+    end_ms         = src.end_ms,
+    text           = copy_text,
+    first_line     = 0,
+  }
+
+  table.insert(entries, idx + 1, copy)
+
+  lines_set(parser.entries_to_lines(entries))
+  info(string.format('Duplicated #%d as #%d', target, idx + 1))
+end
+
 return M

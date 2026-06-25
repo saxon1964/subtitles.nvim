@@ -226,6 +226,12 @@ Reorders subtitle entries by start time (ascending) and renumbers them. Useful a
 
 After execution: buffer contains a valid, renumbered `.srt` file.
 
+### `SubSync dup <N>`
+
+Inserts a copy of subtitle `N` immediately after it with identical timing and text. Useful as a starting point when inserting a nearby subtitle with similar content.
+
+After execution: buffer contains a valid, renumbered `.srt` file.
+
 ### `SubSync split`
 
 Splits the subtitle under the cursor into two consecutive entries. Duration is always divided at the midpoint. Text is split at the cursor line: lines up to and including the cursor line go to the first entry, remaining lines go to the second. If the cursor is on the sequence number or timing line rather than a text line, text is divided in half.
@@ -268,7 +274,7 @@ Removes all annotations from the buffer without changing any timings or renumber
 
 ~~**`SubSync split`**~~ — implemented.
 
-**`SubSync dup <N>`** — duplicate subtitle N as a new entry immediately after it (same timing, same text). Useful as a starting point when inserting a similar subtitle nearby.
+~~**`SubSync dup <N>`**~~ — implemented.
 
 ### Format conversion
 

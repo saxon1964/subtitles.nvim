@@ -8,7 +8,7 @@ function M.setup(user_cfg)
     local args = opts.fargs
     local sub   = args[1]
     if not sub then
-      vim.notify('[SubSync] Usage: SubSync <read|reload|write|shift|interpolate|length|gap|sort|clean|merge|split|info|fixspeed|jump>', vim.log.levels.ERROR)
+      vim.notify('[SubSync] Usage: SubSync <read|reload|write|shift|interpolate|length|gap|sort|clean|merge|split|dup|info|fixspeed|jump>', vim.log.levels.ERROR)
       return
     end
     sub = sub:lower()
@@ -41,6 +41,8 @@ function M.setup(user_cfg)
       cmds.merge()
     elseif sub == 'split' then
       cmds.split()
+    elseif sub == 'dup' then
+      cmds.dup(args[2])
     else
       vim.notify('[SubSync] Unknown command: ' .. sub, vim.log.levels.ERROR)
     end
@@ -55,7 +57,7 @@ function M.setup(user_cfg)
       local trailing_space = cmdline:match('%s$')
 
       if n == 1 or (n == 2 and not trailing_space) then
-        local subs = {'clean', 'fixspeed', 'gap', 'info', 'interpolate', 'jump', 'length', 'merge', 'read', 'reload', 'shift', 'sort', 'split', 'write'}
+        local subs = {'clean', 'dup', 'fixspeed', 'gap', 'info', 'interpolate', 'jump', 'length', 'merge', 'read', 'reload', 'shift', 'sort', 'split', 'write'}
         local out  = {}
         for _, s in ipairs(subs) do
           if s:sub(1, #arglead) == arglead then out[#out + 1] = s end
