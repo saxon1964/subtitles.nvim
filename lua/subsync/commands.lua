@@ -240,9 +240,9 @@ function M.interpolate(strict)
   lines_set(parser.entries_to_lines(entries))
 end
 
--- `:SubSync length [min_timespec] [max_timespec]`
+-- `:SubSync duration [min_timespec] [max_timespec]`
 -- Clamps every subtitle's duration into [min_ms, max_ms] by adjusting end times only.
-function M.length(min_str, max_str)
+function M.duration(min_str, max_str)
   local min_ms, max_ms
   if min_str and min_str ~= '' then
     min_ms = time.parse(min_str)
@@ -280,7 +280,7 @@ function M.length(min_str, max_str)
     end
   end
 
-  if changed == 0 then info('All subtitles already within length bounds'); return end
+  if changed == 0 then info('All subtitles already within duration bounds'); return end
   lines_set(parser.entries_to_lines(entries))
   info(string.format('Adjusted %d subtitle(s)', changed))
 end

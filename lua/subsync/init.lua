@@ -8,7 +8,7 @@ function M.setup(user_cfg)
     local args = opts.fargs
     local sub   = args[1]
     if not sub then
-      vim.notify('[SubSync] Usage: SubSync <read|reload|write|shift|interpolate|length|gap|sort|clean|merge|split|dup|info|fixspeed|jump>', vim.log.levels.ERROR)
+      vim.notify('[SubSync] Usage: SubSync <read|reload|write|shift|interpolate|duration|gap|sort|clean|merge|split|dup|info|fixspeed|jump>', vim.log.levels.ERROR)
       return
     end
     sub = sub:lower()
@@ -23,8 +23,8 @@ function M.setup(user_cfg)
       cmds.shift(args[2] or '')
     elseif sub == 'interpolate' then
       cmds.interpolate(args[2] and args[2]:lower() == 'strict')
-    elseif sub == 'length' then
-      cmds.length(args[2], args[3])
+    elseif sub == 'duration' then
+      cmds.duration(args[2], args[3])
     elseif sub == 'gap' then
       cmds.gap(args[2])
     elseif sub == 'clean' then
@@ -57,7 +57,7 @@ function M.setup(user_cfg)
       local trailing_space = cmdline:match('%s$')
 
       if n == 1 or (n == 2 and not trailing_space) then
-        local subs = {'clean', 'dup', 'fixspeed', 'gap', 'info', 'interpolate', 'jump', 'length', 'merge', 'read', 'reload', 'shift', 'sort', 'split', 'write'}
+        local subs = {'clean', 'duration', 'dup', 'fixspeed', 'gap', 'info', 'interpolate', 'jump', 'merge', 'read', 'reload', 'shift', 'sort', 'split', 'write'}
         local out  = {}
         for _, s in ipairs(subs) do
           if s:sub(1, #arglead) == arglead then out[#out + 1] = s end

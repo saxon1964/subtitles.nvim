@@ -124,8 +124,8 @@ require('subsync').setup({
 |---|---|---|
 | `default_encoding` | `'utf-8'` | Encoding used by `read`/`write`/`reload` when none is specified |
 | `default_gap` | `80` ms | Minimum gap enforced by `SubSync gap` when called without an argument |
-| `min_duration` | `1500` ms | Minimum subtitle duration used by `SubSync length` when called without arguments |
-| `max_duration` | `6000` ms | Maximum subtitle duration used by `SubSync length` when called without arguments |
+| `min_duration` | `1500` ms | Minimum subtitle duration used by `SubSync duration` when called without arguments |
+| `max_duration` | `6000` ms | Maximum subtitle duration used by `SubSync duration` when called without arguments |
 | `max_reading_speed` | `17` chars/sec | Threshold above which `SubSync info` flags a subtitle as hard to read |
 
 ---
@@ -166,7 +166,7 @@ After execution: buffer contains a valid, annotation-free `.srt` file with renum
 
 Same as `SubSync interpolate`, but subtitles outside the outermost anchor points retain their original timings unchanged.
 
-### `SubSync length <min_timespec> <max_timespec>`
+### `SubSync duration <min_timespec> <max_timespec>`
 
 Enforces a visibility duration window on every subtitle by adjusting end times only (start times are never changed).
 

@@ -39,8 +39,8 @@ All options have sensible defaults. Override any of them by passing a table to
 require('subsync').setup({
   default_encoding  = 'utf-8',  -- fallback encoding for read/write/reload
   default_gap       = 80,       -- ms, used by SubSync gap when no arg given
-  min_duration      = 1500,     -- ms, used by SubSync length when no arg given
-  max_duration      = 6000,     -- ms, used by SubSync length when no arg given
+  min_duration      = 1500,     -- ms, used by SubSync duration when no arg given
+  max_duration      = 6000,     -- ms, used by SubSync duration when no arg given
   max_reading_speed = 17,       -- chars/sec, used by SubSync info
 })
 ```
@@ -49,8 +49,8 @@ require('subsync').setup({
 |---|---|---|
 | `default_encoding` | `'utf-8'` | Encoding used by `read`/`write`/`reload` when none is specified |
 | `default_gap` | `80` | Minimum gap in ms enforced by `SubSync gap` when called without an argument |
-| `min_duration` | `1500` | Minimum subtitle duration in ms used by `SubSync length` when called without arguments |
-| `max_duration` | `6000` | Maximum subtitle duration in ms used by `SubSync length` when called without arguments |
+| `min_duration` | `1500` | Minimum subtitle duration in ms used by `SubSync duration` when called without arguments |
+| `max_duration` | `6000` | Maximum subtitle duration in ms used by `SubSync duration` when called without arguments |
 | `max_reading_speed` | `17` | Characters per second threshold above which `SubSync info` flags a subtitle as hard to read |
 
 ---
@@ -104,7 +104,7 @@ anchors are extrapolated using the slope of the nearest segment.
 Same as `SubSync interpolate`, but subtitles outside the outermost anchor points are
 left unchanged.
 
-### `SubSync length [min_timespec] [max_timespec]`
+### `SubSync duration [min_timespec] [max_timespec]`
 
 Enforces a visibility duration window on every subtitle by adjusting end times only
 — start times are never changed. Omitting either argument uses `min_duration` or
@@ -117,8 +117,8 @@ Enforces a visibility duration window on every subtitle by adjusting end times o
 - Subtitles already within the window are left unchanged.
 
 ```vim
-:SubSync length 2 5        " min 2 s, max 5 s
-:SubSync length 1,500 4    " min 1.5 s, max 4 s
+:SubSync duration 2 5        " min 2 s, max 5 s
+:SubSync duration 1,500 4    " min 1.5 s, max 4 s
 ```
 
 ### `SubSync gap [timespec]`
