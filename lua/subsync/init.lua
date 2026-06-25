@@ -42,7 +42,7 @@ function M.setup(user_cfg)
     elseif sub == 'merge' then
       cmds.merge()
     elseif sub == 'split' then
-      cmds.split()
+      cmds.split(args[2])
     elseif sub == 'dup' then
       cmds.dup(args[2])
     else

@@ -625,35 +625,44 @@ function M.merge()
   info(string.format('Merged #%s with #%s', cur.seq, next.seq))
 end
 
--- `:SubSync split`
--- Splits the subtitle under the cursor into two entries.
+-- `:SubSync split [N]`
+-- Splits subtitle N (or the subtitle under the cursor) into two entries.
 -- If the cursor is on a text line, that line becomes the last line of the first
 -- entry and remaining text goes to the second. If on the seq/timing line,
--- text is divided in half. Duration is always split at the midpoint.
-function M.split()
+-- or when a number is given, text is divided in half. Duration is always split
+-- at the midpoint.
+function M.split(seq_str)
   local entries = parser.parse_buffer(lines_get())
   if #entries == 0 then info('No subtitle entries found'); return end
-
-  local cursor_line = vim.api.nvim_win_get_cursor(0)[1]  -- 1-based
 
   local idx        = nil
   local split_after = nil  -- split after this many text lines (1-based into text[])
 
-  for i, e in ipairs(entries) do
-    local last_line = e.first_line + 1 + #e.text  -- seq + timing + text lines
-    if cursor_line >= e.first_line and cursor_line <= last_line then
-      idx = i
-      local text_offset = cursor_line - (e.first_line + 2) + 1  -- 1-based index into text[]
-      if text_offset >= 1 and text_offset <= #e.text then
-        split_after = text_offset
-      else
-        split_after = math.max(1, math.ceil(#e.text / 2))
-      end
-      break
+  if seq_str and seq_str ~= '' then
+    local target = tonumber(seq_str)
+    if not target then err('Invalid subtitle number: ' .. seq_str); return end
+    for i, e in ipairs(entries) do
+      if tonumber(e.seq) == target then idx = i; break end
     end
+    if not idx then err('Subtitle #' .. seq_str .. ' not found'); return end
+    split_after = math.max(1, math.ceil(#entries[idx].text / 2))
+  else
+    local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+    for i, e in ipairs(entries) do
+      local last_line = e.first_line + 1 + #e.text
+      if cursor_line >= e.first_line and cursor_line <= last_line then
+        idx = i
+        local text_offset = cursor_line - (e.first_line + 2) + 1
+        if text_offset >= 1 and text_offset <= #e.text then
+          split_after = text_offset
+        else
+          split_after = math.max(1, math.ceil(#e.text / 2))
+        end
+        break
+      end
+    end
+    if not idx then err('Cursor is not inside a subtitle entry'); return end
   end
-
-  if not idx then err('Cursor is not inside a subtitle entry'); return end
 
   local e      = entries[idx]
   local mid_ms = math.floor((e.start_ms + e.end_ms) / 2)
