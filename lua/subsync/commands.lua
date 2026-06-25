@@ -4,11 +4,12 @@ local time   = require('subsync.time')
 local M = {}
 
 local cfg = {
-  default_encoding  = 'utf-8',
-  default_gap       = 80,    -- ms
-  min_duration      = 1500,  -- ms
-  max_duration      = 6000,  -- ms
-  max_reading_speed = 17,    -- chars/sec
+  default_encoding        = 'utf-8',
+  default_gap             = 80,    -- ms
+  min_duration            = 1500,  -- ms
+  max_duration            = 6000,  -- ms
+  max_reading_speed       = 17,    -- chars/sec
+  recommended_line_length = 40,    -- characters
 }
 
 function M.setup(user_cfg)
@@ -402,7 +403,7 @@ function M.info()
   local n = #entries
 
   -- Collect violations.
-  local too_short, too_long, gap_small, overlapping, too_fast, out_of_order = {}, {}, {}, {}, {}, {}
+  local too_short, too_long, gap_small, overlapping, too_fast, out_of_order, long_lines = {}, {}, {}, {}, {}, {}, {}
 
   for i, e in ipairs(entries) do
     local dur = e.end_ms - e.start_ms
@@ -413,6 +414,13 @@ function M.info()
     local chars = #text:gsub('%s+', ' '):gsub('<[^>]+>', '')
     if dur > 0 and (chars / (dur / 1000)) > cfg.max_reading_speed then
       too_fast[#too_fast + 1] = e.seq
+    end
+
+    for _, line in ipairs(e.text) do
+      if #line:gsub('<[^>]+>', '') > cfg.recommended_line_length then
+        long_lines[#long_lines + 1] = e.seq
+        break
+      end
     end
 
     if i > 1 then
@@ -445,10 +453,11 @@ function M.info()
     'SubSync Info — ' .. n .. ' subtitle' .. (n ~= 1 and 's' or ''),
     '',
     'Limits in use:',
-    string.format('  Min duration       : %d ms',       cfg.min_duration),
-    string.format('  Max duration       : %d ms',       cfg.max_duration),
-    string.format('  Min gap            : %d ms',       cfg.default_gap),
+    string.format('  Min duration       : %d ms',        cfg.min_duration),
+    string.format('  Max duration       : %d ms',        cfg.max_duration),
+    string.format('  Min gap            : %d ms',        cfg.default_gap),
     string.format('  Max reading speed  : %d chars/sec', cfg.max_reading_speed),
+    string.format('  Max line length    : %d chars',     cfg.recommended_line_length),
     '',
     'Issues found:',
     fmt_count(too_short,    'Too short (< ' .. cfg.min_duration .. ' ms)'),
@@ -457,6 +466,7 @@ function M.info()
     fmt_count(overlapping,  'Overlapping'),
     fmt_count(too_fast,     'Too fast (> ' .. cfg.max_reading_speed .. ' cps)'),
     fmt_count(out_of_order, 'Out of order'),
+    fmt_count(long_lines,   'Line too long (> ' .. cfg.recommended_line_length .. ' chars)'),
   }
 
   -- Remember the subtitle window before opening the split.
@@ -645,6 +655,111 @@ function M.split()
 
   lines_set(parser.entries_to_lines(entries))
   info(string.format('Split #%s at %s', e.seq, time.format(mid_ms)))
+end
+
+-- `:SubSync length [N]`
+-- Rebalances over-long text lines in subtitle N (or the subtitle under the cursor).
+-- Text is split into paragraphs at lines starting with - or —. Paragraphs where
+-- all lines are already within recommended_line_length are left untouched.
+-- Paragraphs with at least one long line are rejoined and re-wrapped greedily.
+
+local function visible_len(s)
+  return #s:gsub('<[^>]+>', '')
+end
+
+local function rebalance_paragraph(para_lines, max_len)
+  local needs = false
+  for _, l in ipairs(para_lines) do
+    if visible_len(l) > max_len then needs = true; break end
+  end
+  if not needs then return para_lines end
+
+  -- Preserve leading dash/em-dash on first line.
+  local leader = para_lines[1]:match('^(%s*[-—]%s*)') or ''
+  local joined = para_lines[1]:sub(#leader + 1)
+  for i = 2, #para_lines do joined = joined .. ' ' .. para_lines[i] end
+  joined = joined:match('^%s*(.-)%s*$')
+
+  local words = {}
+  for w in joined:gmatch('%S+') do words[#words + 1] = w end
+  if #words == 0 then return {leader} end
+
+  local result = {}
+  local cur = leader .. words[1]
+  for i = 2, #words do
+    local candidate = cur .. ' ' .. words[i]
+    if visible_len(candidate) <= max_len then
+      cur = candidate
+    else
+      result[#result + 1] = cur
+      cur = words[i]
+    end
+  end
+  result[#result + 1] = cur
+  return result
+end
+
+function M.length(seq_str)
+  local entries = parser.parse_buffer(lines_get())
+  if #entries == 0 then info('No subtitle entries found'); return end
+
+  local idx = nil
+  if seq_str and seq_str ~= '' then
+    local target = tonumber(seq_str)
+    if not target then err('Invalid subtitle number: ' .. seq_str); return end
+    for i, e in ipairs(entries) do
+      if tonumber(e.seq) == target then idx = i; break end
+    end
+    if not idx then err('Subtitle #' .. seq_str .. ' not found'); return end
+  else
+    local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+    for i, e in ipairs(entries) do
+      local last_line = e.first_line + 1 + #e.text
+      if cursor_line >= e.first_line and cursor_line <= last_line then
+        idx = i; break
+      end
+    end
+    if not idx then err('Cursor is not inside a subtitle entry'); return end
+  end
+
+  local e       = entries[idx]
+  local max_len = cfg.recommended_line_length
+
+  -- Split text into paragraphs (new paragraph starts at a leading - or —).
+  local paragraphs = {}
+  local cur_para   = {}
+  for _, line in ipairs(e.text) do
+    if #cur_para > 0 and line:match('^%s*[-—]') then
+      paragraphs[#paragraphs + 1] = cur_para
+      cur_para = {line}
+    else
+      cur_para[#cur_para + 1] = line
+    end
+  end
+  if #cur_para > 0 then paragraphs[#paragraphs + 1] = cur_para end
+
+  local new_text = {}
+  local changed  = false
+  for _, para in ipairs(paragraphs) do
+    local new_para = rebalance_paragraph(para, max_len)
+    if #new_para ~= #para then
+      changed = true
+    else
+      for i = 1, #para do
+        if new_para[i] ~= para[i] then changed = true; break end
+      end
+    end
+    for _, line in ipairs(new_para) do new_text[#new_text + 1] = line end
+  end
+
+  if not changed then
+    info(string.format('#%s: all lines within %d character limit', e.seq, max_len))
+    return
+  end
+
+  e.text = new_text
+  lines_set(parser.entries_to_lines(entries))
+  info(string.format('#%s: lines rebalanced', e.seq))
 end
 
 -- `:SubSync dup [N]`

@@ -112,11 +112,12 @@ All options have sensible defaults. Users can override them by passing a table t
 
 ```lua
 require('subsync').setup({
-  default_encoding  = 'utf-8',
-  default_gap       = 80,
-  min_duration      = 1500,
-  max_duration      = 6000,
-  max_reading_speed = 17,
+  default_encoding        = 'utf-8',
+  default_gap             = 80,
+  min_duration            = 1500,
+  max_duration            = 6000,
+  max_reading_speed       = 17,
+  recommended_line_length = 40,
 })
 ```
 
@@ -127,6 +128,7 @@ require('subsync').setup({
 | `min_duration` | `1500` ms | Minimum subtitle duration used by `SubSync duration` when called without arguments |
 | `max_duration` | `6000` ms | Maximum subtitle duration used by `SubSync duration` when called without arguments |
 | `max_reading_speed` | `17` chars/sec | Threshold above which `SubSync info` flags a subtitle as hard to read |
+| `recommended_line_length` | `40` chars | Maximum line length used by `SubSync length` and reported by `SubSync info` |
 
 ---
 
@@ -247,6 +249,17 @@ Merges the subtitle under the cursor with the immediately following entry. The r
 Errors if the cursor is not inside a subtitle entry, or if the current entry is the last one.
 
 After execution: buffer contains a valid, renumbered `.srt` file.
+
+### `SubSync length [N]`
+
+Rebalances over-long text lines in subtitle `N`, or in the subtitle under the cursor if `N` is omitted.
+
+Text is split into paragraphs at lines whose first non-space character is `-` or `—` (em-dash). Each paragraph is treated independently:
+
+- If all lines in a paragraph are within `recommended_line_length`, the paragraph is left exactly as-is.
+- If any line exceeds the limit, the paragraph's words are rejoined and re-wrapped greedily to fit within `recommended_line_length`, preserving the leading `-`/`—` on the first line of a paragraph.
+
+`SubSync info` reports which subtitles have at least one line exceeding `recommended_line_length`.
 
 ### `SubSync clean`
 

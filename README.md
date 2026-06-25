@@ -40,11 +40,12 @@ All options have sensible defaults. Override any of them by passing a table to
 
 ```lua
 require('subsync').setup({
-  default_encoding  = 'utf-8',  -- fallback encoding for read/write/reload
-  default_gap       = 80,       -- ms, used by SubSync gap when no arg given
-  min_duration      = 1500,     -- ms, used by SubSync duration when no arg given
-  max_duration      = 6000,     -- ms, used by SubSync duration when no arg given
-  max_reading_speed = 17,       -- chars/sec, used by SubSync info
+  default_encoding        = 'utf-8',  -- fallback encoding for read/write/reload
+  default_gap             = 80,       -- ms, used by SubSync gap when no arg given
+  min_duration            = 1500,     -- ms, used by SubSync duration when no arg given
+  max_duration            = 6000,     -- ms, used by SubSync duration when no arg given
+  max_reading_speed       = 17,       -- chars/sec, used by SubSync info and fixspeed
+  recommended_line_length = 40,       -- chars, used by SubSync length and info
 })
 ```
 
@@ -55,6 +56,7 @@ require('subsync').setup({
 | `min_duration` | `1500` | Minimum subtitle duration in ms used by `SubSync duration` when called without arguments |
 | `max_duration` | `6000` | Maximum subtitle duration in ms used by `SubSync duration` when called without arguments |
 | `max_reading_speed` | `17` | Characters per second threshold above which `SubSync info` flags a subtitle as hard to read |
+| `recommended_line_length` | `40` | Maximum line length used by `SubSync length` and reported by `SubSync info` |
 
 ---
 
@@ -180,6 +182,7 @@ limits and a count of subtitles violating each one:
 - Gap too small / overlapping (vs. `default_gap`)
 - Too fast to read (vs. `max_reading_speed`) — sequence numbers listed
 - Out of order — sequence numbers listed
+- Line too long (vs. `recommended_line_length`) — sequence numbers listed
 
 Press `q` to close the info window. Press `Enter` on any line containing a
 subtitle number (e.g. `#42`) to jump directly to that subtitle in the main
@@ -212,6 +215,27 @@ starting point when adding a nearby subtitle with similar content.
 ```vim
 :SubSync dup      " duplicate subtitle under cursor
 :SubSync dup 42   " duplicate subtitle #42
+```
+
+### `SubSync length [N]`
+
+Rebalances over-long text lines in subtitle `N`, or the subtitle under the cursor
+if `N` is omitted.
+
+Text is split into paragraphs at lines whose first non-space character is `-` or
+`—`. Each paragraph is handled independently:
+
+- A paragraph where all lines are within `recommended_line_length` is left
+  **exactly as-is** — intentional line breaks are preserved.
+- A paragraph with at least one long line has its words rejoined and re-wrapped
+  greedily to fit within `recommended_line_length`. A leading `-`/`—` on the
+  first line of a paragraph is preserved.
+
+Use `SubSync info` to find which subtitles need attention.
+
+```vim
+:SubSync length      " rebalance subtitle under cursor
+:SubSync length 42   " rebalance subtitle #42
 ```
 
 ### `SubSync clean`
