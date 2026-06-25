@@ -647,23 +647,32 @@ function M.split()
   info(string.format('Split #%s at %s', e.seq, time.format(mid_ms)))
 end
 
--- `:SubSync dup <N>`
--- Inserts a copy of subtitle N immediately after it with identical timing and text.
+-- `:SubSync dup [N]`
+-- Inserts a copy of subtitle N (or the subtitle under the cursor) immediately
+-- after it with identical timing and text.
 function M.dup(seq_str)
-  if not seq_str or seq_str == '' then
-    err('Usage: SubSync dup <number>'); return
-  end
-  local target = tonumber(seq_str)
-  if not target then err('Invalid subtitle number: ' .. seq_str); return end
-
   local entries = parser.parse_buffer(lines_get())
+  if #entries == 0 then info('No subtitle entries found'); return end
 
   local idx = nil
-  for i, e in ipairs(entries) do
-    if tonumber(e.seq) == target then idx = i; break end
-  end
 
-  if not idx then err('Subtitle #' .. seq_str .. ' not found'); return end
+  if seq_str and seq_str ~= '' then
+    local target = tonumber(seq_str)
+    if not target then err('Invalid subtitle number: ' .. seq_str); return end
+    for i, e in ipairs(entries) do
+      if tonumber(e.seq) == target then idx = i; break end
+    end
+    if not idx then err('Subtitle #' .. seq_str .. ' not found'); return end
+  else
+    local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+    for i, e in ipairs(entries) do
+      local last_line = e.first_line + 1 + #e.text
+      if cursor_line >= e.first_line and cursor_line <= last_line then
+        idx = i; break
+      end
+    end
+    if not idx then err('Cursor is not inside a subtitle entry'); return end
+  end
 
   local src = entries[idx]
   local copy_text = {}
@@ -682,7 +691,7 @@ function M.dup(seq_str)
   table.insert(entries, idx + 1, copy)
 
   lines_set(parser.entries_to_lines(entries))
-  info(string.format('Duplicated #%d as #%d', target, idx + 1))
+  info(string.format('Duplicated #%s as #%d', entries[idx].seq, idx + 1))
 end
 
 return M
