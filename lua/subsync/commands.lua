@@ -587,4 +587,64 @@ function M.merge()
   info(string.format('Merged #%s with #%s', cur.seq, next.seq))
 end
 
+-- `:SubSync split`
+-- Splits the subtitle under the cursor into two entries.
+-- If the cursor is on a text line, that line becomes the last line of the first
+-- entry and remaining text goes to the second. If on the seq/timing line,
+-- text is divided in half. Duration is always split at the midpoint.
+function M.split()
+  local entries = parser.parse_buffer(lines_get())
+  if #entries == 0 then info('No subtitle entries found'); return end
+
+  local cursor_line = vim.api.nvim_win_get_cursor(0)[1]  -- 1-based
+
+  local idx        = nil
+  local split_after = nil  -- split after this many text lines (1-based into text[])
+
+  for i, e in ipairs(entries) do
+    local last_line = e.first_line + 1 + #e.text  -- seq + timing + text lines
+    if cursor_line >= e.first_line and cursor_line <= last_line then
+      idx = i
+      local text_offset = cursor_line - (e.first_line + 2) + 1  -- 1-based index into text[]
+      if text_offset >= 1 and text_offset <= #e.text then
+        split_after = text_offset
+      else
+        split_after = math.max(1, math.ceil(#e.text / 2))
+      end
+      break
+    end
+  end
+
+  if not idx then err('Cursor is not inside a subtitle entry'); return end
+
+  local e      = entries[idx]
+  local mid_ms = math.floor((e.start_ms + e.end_ms) / 2)
+
+  local text1, text2 = {}, {}
+  for i, line in ipairs(e.text) do
+    if i <= split_after then text1[#text1 + 1] = line
+    else                     text2[#text2 + 1] = line end
+  end
+
+  local new_entry = {
+    seq            = e.seq,
+    annotation_str = nil,
+    annotation     = nil,
+    start_ms       = mid_ms,
+    end_ms         = e.end_ms,
+    text           = text2,
+    first_line     = 0,
+  }
+
+  e.end_ms        = mid_ms
+  e.text          = text1
+  e.annotation    = nil
+  e.annotation_str = nil
+
+  table.insert(entries, idx + 1, new_entry)
+
+  lines_set(parser.entries_to_lines(entries))
+  info(string.format('Split #%s at %s', e.seq, time.format(mid_ms)))
+end
+
 return M
