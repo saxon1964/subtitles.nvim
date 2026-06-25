@@ -547,4 +547,44 @@ function M.fixspeed(speed_str)
   info(msg)
 end
 
+-- `:SubSync merge`
+-- Merges the subtitle under the cursor with the immediately following entry.
+-- Result keeps current entry's start time and next entry's end time.
+-- Text lines are concatenated. Buffer is renumbered.
+function M.merge()
+  local entries = parser.parse_buffer(lines_get())
+  if #entries == 0 then info('No subtitle entries found'); return end
+
+  local cursor_line = vim.api.nvim_win_get_cursor(0)[1]  -- 1-based
+
+  -- Find which entry the cursor is in.
+  local idx = nil
+  for i, e in ipairs(entries) do
+    local entry_lines = 2 + #e.text  -- seq line + timing line + text lines
+    local last_line = e.first_line + entry_lines - 1
+    if cursor_line >= e.first_line and cursor_line <= last_line then
+      idx = i
+      break
+    end
+  end
+
+  if not idx then err('Cursor is not inside a subtitle entry'); return end
+  if idx == #entries then err('No next subtitle to merge with'); return end
+
+  local cur  = entries[idx]
+  local next = entries[idx + 1]
+
+  -- Merge: start from cur, end from next, text concatenated.
+  cur.end_ms = next.end_ms
+  for _, line in ipairs(next.text) do
+    cur.text[#cur.text + 1] = line
+  end
+  cur.annotation = nil; cur.annotation_str = nil
+
+  table.remove(entries, idx + 1)
+
+  lines_set(parser.entries_to_lines(entries))
+  info(string.format('Merged #%s with #%s', cur.seq, next.seq))
+end
+
 return M

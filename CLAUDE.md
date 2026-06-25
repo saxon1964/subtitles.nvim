@@ -226,6 +226,14 @@ Reorders subtitle entries by start time (ascending) and renumbers them. Useful a
 
 After execution: buffer contains a valid, renumbered `.srt` file.
 
+### `SubSync merge`
+
+Merges the subtitle under the cursor with the immediately following entry. The result keeps the current entry's start time and the next entry's end time; text lines are concatenated. The buffer is renumbered.
+
+Errors if the cursor is not inside a subtitle entry, or if the current entry is the last one.
+
+After execution: buffer contains a valid, renumbered `.srt` file.
+
 ### `SubSync clean`
 
 Removes all annotations from the buffer without changing any timings or renumbering. Useful for discarding annotations without applying them.
@@ -248,7 +256,7 @@ Removes all annotations from the buffer without changing any timings or renumber
 
 ### Editing ergonomics
 
-**`SubSync merge`** — join consecutive subtitles into one: concatenate text, use first entry's start time and last entry's end time. Useful when a subtitle was split too aggressively.
+~~**`SubSync merge`**~~ — implemented.
 
 **`SubSync split`** — split the current subtitle at the cursor line into two entries, dividing the duration evenly. Inverse of `merge`.
 
