@@ -21,6 +21,9 @@ end
 -- Remembered encoding per buffer number.
 local buf_enc = {}
 
+-- Reusable info buffer per source buffer: src_bufnr -> info_bufnr
+local info_bufs = {}
+
 local function lines_get()
   return vim.api.nvim_buf_get_lines(0, 0, -1, false)
 end
@@ -469,48 +472,72 @@ function M.info()
     fmt_count(long_lines,   'Line too long (> ' .. cfg.recommended_line_length .. ' chars)'),
   }
 
-  -- Remember the subtitle window before opening the split.
-  local sub_win = vim.api.nvim_get_current_win()
+  local src_bufnr  = vim.api.nvim_get_current_buf()
+  local existing   = info_bufs[src_bufnr]
+  local info_bufnr
 
-  -- Open a scratch split at the bottom.
-  vim.cmd('botright 16split')
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_win_set_buf(0, bufnr)
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-  vim.bo[bufnr].modifiable = false
-  vim.bo[bufnr].bufhidden  = 'wipe'
-  vim.bo[bufnr].filetype   = 'subsync-info'
-  vim.keymap.set('n', 'q', '<cmd>close<cr>', { buffer = bufnr, silent = true })
+  if existing and vim.api.nvim_buf_is_valid(existing) then
+    -- Reuse: update content in place.
+    info_bufnr = existing
+    vim.bo[info_bufnr].modifiable = true
+    vim.api.nvim_buf_set_lines(info_bufnr, 0, -1, false, lines)
+    vim.bo[info_bufnr].modifiable = false
+    -- Switch to the existing window if open, otherwise open a new split.
+    local win = vim.fn.bufwinid(info_bufnr)
+    if win ~= -1 then
+      vim.api.nvim_set_current_win(win)
+    else
+      vim.cmd('botright 16split')
+      vim.api.nvim_win_set_buf(0, info_bufnr)
+    end
+  else
+    -- First open: create buffer, register keymaps, open split.
+    info_bufnr = vim.api.nvim_create_buf(false, true)
+    info_bufs[src_bufnr] = info_bufnr
+    vim.api.nvim_buf_set_lines(info_bufnr, 0, -1, false, lines)
+    vim.bo[info_bufnr].modifiable = false
+    vim.bo[info_bufnr].bufhidden  = 'wipe'
+    vim.bo[info_bufnr].filetype   = 'subsync-info'
 
-  -- Enter on a line jumps to the subtitle whose #N is under/nearest the cursor.
-  vim.keymap.set('n', '<CR>', function()
-    local line = vim.api.nvim_get_current_line()
-    local col  = vim.api.nvim_win_get_cursor(0)[2]  -- 0-indexed byte offset
+    vim.keymap.set('n', 'q', '<cmd>close<cr>', { buffer = info_bufnr, silent = true })
 
-    -- Scan all #N tokens; pick the one the cursor is inside, else the nearest.
-    local best_seq, best_dist = nil, math.huge
-    local pos = 1
-    while true do
-      local s, e, seq = line:find('#(%d+)', pos)
-      if not s then break end
-      local token_start = s - 1  -- convert to 0-indexed
-      local token_end   = e - 1
-      if col >= token_start and col <= token_end then
-        best_seq = seq
-        break
+    -- Enter jumps to the subtitle whose #N is under/nearest the cursor.
+    -- Finds the source buffer's window dynamically so stale window refs are never used.
+    vim.keymap.set('n', '<CR>', function()
+      local line = vim.api.nvim_get_current_line()
+      local col  = vim.api.nvim_win_get_cursor(0)[2]
+
+      local best_seq, best_dist = nil, math.huge
+      local pos = 1
+      while true do
+        local s, e, seq = line:find('#(%d+)', pos)
+        if not s then break end
+        local token_start = s - 1
+        local token_end   = e - 1
+        if col >= token_start and col <= token_end then
+          best_seq = seq; break
+        end
+        local dist = math.min(math.abs(col - token_start), math.abs(col - token_end))
+        if dist < best_dist then best_dist = dist; best_seq = seq end
+        pos = e + 1
       end
-      local dist = math.min(math.abs(col - token_start), math.abs(col - token_end))
-      if dist < best_dist then best_dist = dist; best_seq = seq end
-      pos = e + 1
-    end
 
-    if not best_seq then info('No subtitle number on this line'); return end
-    if not vim.api.nvim_win_is_valid(sub_win) then
-      err('Subtitle window no longer open'); return
-    end
-    vim.api.nvim_set_current_win(sub_win)
-    M.jump(best_seq)
-  end, { buffer = bufnr, silent = true })
+      if not best_seq then info('No subtitle number on this line'); return end
+
+      local target_win = nil
+      for _, w in ipairs(vim.api.nvim_list_wins()) do
+        if vim.api.nvim_win_get_buf(w) == src_bufnr then
+          target_win = w; break
+        end
+      end
+      if not target_win then err('Subtitle buffer is no longer open'); return end
+      vim.api.nvim_set_current_win(target_win)
+      M.jump(best_seq)
+    end, { buffer = info_bufnr, silent = true })
+
+    vim.cmd('botright 16split')
+    vim.api.nvim_win_set_buf(0, info_bufnr)
+  end
 end
 
 -- `:SubSync fixspeed [chars_per_sec]`
