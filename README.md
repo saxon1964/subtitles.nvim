@@ -203,14 +203,15 @@ duration at the midpoint. If the cursor is on a text line, that line becomes the
 last line of the first entry and the remaining text goes to the second. If the
 cursor is on the sequence number or timing line, text is divided in half.
 
-### `SubSync dup <N>`
+### `SubSync dup [N]`
 
 Inserts a copy of subtitle `N` immediately after it with identical timing and
-text. Useful as a starting point when adding a nearby subtitle with similar
-content.
+text. If `N` is omitted, duplicates the subtitle under the cursor. Useful as a
+starting point when adding a nearby subtitle with similar content.
 
 ```vim
-:SubSync dup 42
+:SubSync dup      " duplicate subtitle under cursor
+:SubSync dup 42   " duplicate subtitle #42
 ```
 
 ### `SubSync clean`
