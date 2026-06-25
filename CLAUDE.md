@@ -234,19 +234,19 @@ Inserts a copy of subtitle `N` immediately after it with identical timing and te
 
 After execution: buffer contains a valid, renumbered `.srt` file.
 
-### `SubSync split`
+### `SubSync split [N]`
 
-Splits the subtitle under the cursor into two consecutive entries. Duration is always divided at the midpoint. Text is split at the cursor line: lines up to and including the cursor line go to the first entry, remaining lines go to the second. If the cursor is on the sequence number or timing line rather than a text line, text is divided in half.
+Splits subtitle `N` (or the subtitle under the cursor if `N` is omitted) into two consecutive entries. Duration is always divided at the midpoint. When using the cursor, text is split at the cursor line: lines up to and including the cursor line go to the first entry, remaining lines go to the second. If the cursor is on the sequence number or timing line, or when a number is given, text is divided in half.
 
 If the cursor ends up on the last text line, the second entry will have no text — this is intentional; the user can fill it in.
 
 After execution: buffer contains a valid, renumbered `.srt` file.
 
-### `SubSync merge`
+### `SubSync merge [N]`
 
-Merges the subtitle under the cursor with the immediately following entry. The result keeps the current entry's start time and the next entry's end time; text lines are concatenated. The buffer is renumbered.
+Merges subtitle `N` (or the subtitle under the cursor if `N` is omitted) with the immediately following entry. The result keeps the current entry's start time and the next entry's end time; text lines are concatenated. The buffer is renumbered.
 
-Errors if the cursor is not inside a subtitle entry, or if the current entry is the last one.
+Errors if the target entry is the last one.
 
 After execution: buffer contains a valid, renumbered `.srt` file.
 
