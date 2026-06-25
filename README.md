@@ -45,7 +45,7 @@ require('subsync').setup({
   min_duration            = 1500,     -- ms, used by SubSync duration when no arg given
   max_duration            = 6000,     -- ms, used by SubSync duration when no arg given
   max_reading_speed       = 17,       -- chars/sec, used by SubSync info and fixspeed
-  recommended_line_length = 40,       -- chars, used by SubSync length and info
+  recommended_line_length = 40,       -- chars, used by SubSync wrap and info
 })
 ```
 
@@ -56,7 +56,7 @@ require('subsync').setup({
 | `min_duration` | `1500` | Minimum subtitle duration in ms used by `SubSync duration` when called without arguments |
 | `max_duration` | `6000` | Maximum subtitle duration in ms used by `SubSync duration` when called without arguments |
 | `max_reading_speed` | `17` | Characters per second threshold above which `SubSync info` flags a subtitle as hard to read |
-| `recommended_line_length` | `40` | Maximum line length used by `SubSync length` and reported by `SubSync info` |
+| `recommended_line_length` | `40` | Maximum line length used by `SubSync wrap` and reported by `SubSync info` |
 
 ---
 
@@ -217,7 +217,7 @@ starting point when adding a nearby subtitle with similar content.
 :SubSync dup 42   " duplicate subtitle #42
 ```
 
-### `SubSync length [N]`
+### `SubSync wrap [N]`
 
 Rebalances over-long text lines in subtitle `N`, or the subtitle under the cursor
 if `N` is omitted.
@@ -234,8 +234,8 @@ Text is split into paragraphs at lines whose first non-space character is `-` or
 Use `SubSync info` to find which subtitles need attention.
 
 ```vim
-:SubSync length      " rebalance subtitle under cursor
-:SubSync length 42   " rebalance subtitle #42
+:SubSync wrap      " rebalance subtitle under cursor
+:SubSync wrap 42   " rebalance subtitle #42
 ```
 
 ### `SubSync clean`

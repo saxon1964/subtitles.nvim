@@ -128,7 +128,7 @@ require('subsync').setup({
 | `min_duration` | `1500` ms | Minimum subtitle duration used by `SubSync duration` when called without arguments |
 | `max_duration` | `6000` ms | Maximum subtitle duration used by `SubSync duration` when called without arguments |
 | `max_reading_speed` | `17` chars/sec | Threshold above which `SubSync info` flags a subtitle as hard to read |
-| `recommended_line_length` | `40` chars | Maximum line length used by `SubSync length` and reported by `SubSync info` |
+| `recommended_line_length` | `40` chars | Maximum line length used by `SubSync wrap` and reported by `SubSync info` |
 
 ---
 
@@ -250,7 +250,7 @@ Errors if the cursor is not inside a subtitle entry, or if the current entry is 
 
 After execution: buffer contains a valid, renumbered `.srt` file.
 
-### `SubSync length [N]`
+### `SubSync wrap [N]`
 
 Rebalances over-long text lines in subtitle `N`, or in the subtitle under the cursor if `N` is omitted.
 

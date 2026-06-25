@@ -657,7 +657,7 @@ function M.split()
   info(string.format('Split #%s at %s', e.seq, time.format(mid_ms)))
 end
 
--- `:SubSync length [N]`
+-- `:SubSync wrap [N]`
 -- Rebalances over-long text lines in subtitle N (or the subtitle under the cursor).
 -- Text is split into paragraphs at lines starting with - or —. Paragraphs where
 -- all lines are already within recommended_line_length are left untouched.
@@ -699,7 +699,7 @@ local function rebalance_paragraph(para_lines, max_len)
   return result
 end
 
-function M.length(seq_str)
+function M.wrap(seq_str)
   local entries = parser.parse_buffer(lines_get())
   if #entries == 0 then info('No subtitle entries found'); return end
 
