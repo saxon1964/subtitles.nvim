@@ -594,6 +594,7 @@ function M.merge()
   table.remove(entries, idx + 1)
 
   lines_set(parser.entries_to_lines(entries))
+  M.jump(tostring(idx))
   info(string.format('Merged #%s with #%s', cur.seq, next.seq))
 end
 
@@ -654,6 +655,7 @@ function M.split()
   table.insert(entries, idx + 1, new_entry)
 
   lines_set(parser.entries_to_lines(entries))
+  M.jump(tostring(idx))
   info(string.format('Split #%s at %s', e.seq, time.format(mid_ms)))
 end
 
@@ -759,6 +761,7 @@ function M.wrap(seq_str)
 
   e.text = new_text
   lines_set(parser.entries_to_lines(entries))
+  M.jump(tostring(idx))
   info(string.format('#%s: lines rebalanced', e.seq))
 end
 
@@ -806,6 +809,7 @@ function M.dup(seq_str)
   table.insert(entries, idx + 1, copy)
 
   lines_set(parser.entries_to_lines(entries))
+  M.jump(tostring(idx + 1))
   info(string.format('Duplicated #%s as #%d', entries[idx].seq, idx + 1))
 end
 
