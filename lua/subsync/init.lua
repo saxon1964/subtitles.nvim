@@ -40,7 +40,7 @@ function M.setup(user_cfg)
     elseif sub == 'wrap' then
       cmds.wrap(args[2])
     elseif sub == 'merge' then
-      cmds.merge()
+      cmds.merge(args[2])
     elseif sub == 'split' then
       cmds.split(args[2])
     elseif sub == 'dup' then

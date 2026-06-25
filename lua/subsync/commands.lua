@@ -584,28 +584,34 @@ function M.fixspeed(speed_str)
   info(msg)
 end
 
--- `:SubSync merge`
--- Merges the subtitle under the cursor with the immediately following entry.
--- Result keeps current entry's start time and next entry's end time.
--- Text lines are concatenated. Buffer is renumbered.
-function M.merge()
+-- `:SubSync merge [N]`
+-- Merges subtitle N (or the subtitle under the cursor) with the immediately
+-- following entry. Result keeps current entry's start time and next entry's
+-- end time. Text lines are concatenated. Buffer is renumbered.
+function M.merge(seq_str)
   local entries = parser.parse_buffer(lines_get())
   if #entries == 0 then info('No subtitle entries found'); return end
 
-  local cursor_line = vim.api.nvim_win_get_cursor(0)[1]  -- 1-based
-
-  -- Find which entry the cursor is in.
   local idx = nil
-  for i, e in ipairs(entries) do
-    local entry_lines = 2 + #e.text  -- seq line + timing line + text lines
-    local last_line = e.first_line + entry_lines - 1
-    if cursor_line >= e.first_line and cursor_line <= last_line then
-      idx = i
-      break
+
+  if seq_str and seq_str ~= '' then
+    local target = tonumber(seq_str)
+    if not target then err('Invalid subtitle number: ' .. seq_str); return end
+    for i, e in ipairs(entries) do
+      if tonumber(e.seq) == target then idx = i; break end
     end
+    if not idx then err('Subtitle #' .. seq_str .. ' not found'); return end
+  else
+    local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+    for i, e in ipairs(entries) do
+      local last_line = e.first_line + 1 + #e.text
+      if cursor_line >= e.first_line and cursor_line <= last_line then
+        idx = i; break
+      end
+    end
+    if not idx then err('Cursor is not inside a subtitle entry'); return end
   end
 
-  if not idx then err('Cursor is not inside a subtitle entry'); return end
   if idx == #entries then err('No next subtitle to merge with'); return end
 
   local cur  = entries[idx]
