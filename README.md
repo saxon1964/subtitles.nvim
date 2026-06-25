@@ -185,6 +185,29 @@ buffer.
 Reorders subtitle entries by start time (ascending) and renumbers them. Useful
 after manually inserting entries out of order. No-op if already sorted.
 
+### `SubSync merge`
+
+Merges the subtitle under the cursor with the immediately following entry. Keeps
+the current entry's start time and the next entry's end time; text lines are
+concatenated.
+
+### `SubSync split`
+
+Splits the subtitle under the cursor into two consecutive entries, dividing the
+duration at the midpoint. If the cursor is on a text line, that line becomes the
+last line of the first entry and the remaining text goes to the second. If the
+cursor is on the sequence number or timing line, text is divided in half.
+
+### `SubSync dup <N>`
+
+Inserts a copy of subtitle `N` immediately after it with identical timing and
+text. Useful as a starting point when adding a nearby subtitle with similar
+content.
+
+```vim
+:SubSync dup 42
+```
+
 ### `SubSync clean`
 
 Removes all annotations without changing any timings or renumbering.
