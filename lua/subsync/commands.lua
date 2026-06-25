@@ -475,17 +475,31 @@ function M.info()
   -- Enter on a line jumps to the subtitle whose #N is under/nearest the cursor.
   vim.keymap.set('n', '<CR>', function()
     local line = vim.api.nvim_get_current_line()
-    local seq = line:match('#(%d+)')
-    if not seq then
-      -- Try scanning leftward on the same line for the first number after '('
-      seq = line:match('%(#(%d+)')
+    local col  = vim.api.nvim_win_get_cursor(0)[2]  -- 0-indexed byte offset
+
+    -- Scan all #N tokens; pick the one the cursor is inside, else the nearest.
+    local best_seq, best_dist = nil, math.huge
+    local pos = 1
+    while true do
+      local s, e, seq = line:find('#(%d+)', pos)
+      if not s then break end
+      local token_start = s - 1  -- convert to 0-indexed
+      local token_end   = e - 1
+      if col >= token_start and col <= token_end then
+        best_seq = seq
+        break
+      end
+      local dist = math.min(math.abs(col - token_start), math.abs(col - token_end))
+      if dist < best_dist then best_dist = dist; best_seq = seq end
+      pos = e + 1
     end
-    if not seq then info('No subtitle number under cursor'); return end
+
+    if not best_seq then info('No subtitle number on this line'); return end
     if not vim.api.nvim_win_is_valid(sub_win) then
       err('Subtitle window no longer open'); return
     end
     vim.api.nvim_set_current_win(sub_win)
-    M.jump(seq)
+    M.jump(best_seq)
   end, { buffer = bufnr, silent = true })
 end
 
