@@ -1,7 +1,5 @@
 # subtitles.nvim
 
-![subtitles.nvim](images/logo-big.jpg)
-
 Neovim plugin for editing subtitle files. Supports arbitrary encodings and
 in-file timing annotations — write timing adjustments directly in the file, then
 apply them all at once with a single command.
