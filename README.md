@@ -13,8 +13,11 @@ apply them all at once with a single command.
 
 **[lazy.nvim](https://github.com/folke/lazy.nvim)**
 ```lua
-{ 'saxon1964/subtitles.nvim', version = '*' }
+{ 'saxon1964/subtitles.nvim', version = '*', ft = 'srt' }
 ```
+The `ft = 'srt'` trigger ensures the plugin loads when you open an `.srt` file.
+Alternatively use `cmd = 'SubSync'` to load on first command use, or
+`lazy = false` to always load at startup.
 
 **[packer.nvim](https://github.com/wbthomason/packer.nvim)**
 ```lua
